@@ -1,15 +1,13 @@
 import openai as ai
 from pathlib import Path
-OPENAI_API_KEY = "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"
+import os
+import config
 
 
-tokens = 0
-
-
-def generate_tmp_chat_file(personal_desc: str, nombre: str):
-    path = Path(nombre + ".txt")
+def generate_tmp_chat_file(personal_desc: str, name_usr: str):
+    path = Path("chats/" + name_usr + ".txt")
     if not path.is_file():
-        context = f"Alguien random llamado {nombre} en una conferencia te dice lo siguiente: \n{nombre}: "
+        context = f"Someone named {name_usr} in a conference tell you this: \n{name_usr}: "
         with open(path, "a") as f:
             f.write(context)
     else:
@@ -18,20 +16,18 @@ def generate_tmp_chat_file(personal_desc: str, nombre: str):
     return context
 
 
-def generate_response(message: str, nombre):
-    nombre_ia = "Andrea Jimenez"
-    description = f"""Eres {nombre_ia} una estudiante de administracion """
-    content = generate_tmp_chat_file(description, nombre)
+def generate_response(message: str, name_usr):
+    content = generate_tmp_chat_file(config.ia_personality, name_usr)
     content += message + '\n'
     response = ai.ChatCompletion.create(
-        api_key=OPENAI_API_KEY,
+        api_key=os.getenv('OPENAI_API_KEY'),
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": description},
+            {"role": "system", "content": config.ia_personality},
             {"role": "user", "content": content}
         ]
     )["choices"][0]["message"]["content"]
-    with open(Path(nombre + ".txt"), 'a') as f:
-        f.write(message.replace(f"{nombre_ia}: ", ""))
-        f.write(f"\n{nombre_ia}: " + response + f"\n\n{nombre}:")
+    with open(Path(name_usr + ".txt"), 'a') as f:
+        f.write(message.replace(f"{config.ia_name}: ", ""))
+        f.write(f"\n{config.ia_name}: " + response + f"\n\n{name_usr}:")
     return response

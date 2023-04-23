@@ -1,27 +1,25 @@
 from flask import Flask, request, Response
 from heyoo import WhatsApp
 from chat import generate_response
-
-
+import os
+import config
 app = Flask(__name__)
-WSP_API_KEY = "EAASWfzoCFZBQBAHhZAXQZBO4cepR9Yt0d6UfZCnQlYHbwsIIGx4HwBZA3aF7BD65z43jTukOLdUc2NRDHKAWuMixz7QonKTYdPZCxEhveknHShNxYA1DnvjZCNRIOzxcSzCBIPJhKLeMYY8ILSZBsoUxkmeA175NQIE4bZA7ZAAY6Qhbr2axNQmqBZAvwpKmTJb5FWSVyr4pUm3bwZDZD"
 
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    chanel = WhatsApp(token=WSP_API_KEY, phone_number_id="121334227598736")
     if request.method == 'GET':
-        if request.args.get("hub.verify_token") == "my_wsp":
+        if request.args.get("hub.verify_token") == os.getenv('HUB_VERIFY_TOKEN'):
             return request.args.get("hub.challenge")
         else:
             return Response(status=401)
+    chanel = WhatsApp(token=os.getenv('WSP_API_KEY'), phone_number_id=os.getenv('TEST_NUMBER_ID'))
     data = request.get_json()
-    print("19 : ", data)
     data2 = data["entry"][0]["changes"][0]["values"]
     message = data2["messages"][0]["text"]["body"]
     response = generate_response(message, data2["contacts"][0]["profile"]["name"])
-    print(chanel.send_message(response.replace("Javier Milei: ", ""), data2["contacts"][0]["wa_id"]))
-    return Response(status=202, body="se envio")
+    print(chanel.send_message(response.replace(f"{config.ia_name}: ", ""), data2["contacts"][0]["wa_id"]))
+    return Response(status=202, body="sended")
 
 
 if __name__ == '__main__':
